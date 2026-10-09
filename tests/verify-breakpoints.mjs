@@ -178,17 +178,18 @@ async function run() {
     return m && !m.classList.contains('open');
   });
 
-  // Verify mobile menu zero-scroll behavior
+  // Verify mobile menu zero-scroll behavior & opening at any scroll position
   console.log('\nTesting Mobile Menu Zero-Scroll behavior on Mobile S (375x812)...');
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('file://' + path.join(rootDir, 'index.html'), { waitUntil: 'load' });
+
+  // Test 1: open at top
   await page.locator('#menu').click();
   await page.waitForTimeout(300);
 
   const menuZeroScroll = await page.evaluate(() => {
     const nav = document.querySelector('#navlinks');
     if (!nav || !nav.classList.contains('open')) return false;
-    // Check that navlinks element does not require scrolling
     return nav.scrollHeight <= nav.clientHeight + 2;
   });
 
@@ -199,6 +200,35 @@ async function run() {
   });
 
   await page.screenshot({ path: path.join(screenshotsDir, 'Mobile_S_menu_open.png') });
+  await page.locator('#menu').click(); // close
+  await page.waitForTimeout(200);
+
+  // Test 2: open when scrolled halfway down the page
+  console.log('Testing Mobile Menu opening when page is scrolled down 2000px...');
+  await page.evaluate(() => window.scrollTo(0, 2000));
+  await page.waitForTimeout(200);
+  await page.locator('#menu').click();
+  await page.waitForTimeout(300);
+
+  const menuScrolledPlacement = await page.evaluate(() => {
+    const nav = document.querySelector('#navlinks');
+    if (!nav || !nav.classList.contains('open')) return false;
+    const r = nav.getBoundingClientRect();
+    // top should be 0 (full viewport coverage), height should equal window.innerHeight
+    return r.top === 0 && Math.abs(r.height - window.innerHeight) <= 2;
+  });
+
+  await page.locator('#menu').click(); // close
+
+  // Test 3: verify copySummary button background is not white (transparent/dark)
+  console.log('Testing copySummary button styling on pricing.html...');
+  await page.goto('file://' + path.join(rootDir, 'pricing.html'), { waitUntil: 'load' });
+  const copyBtnBgClean = await page.evaluate(() => {
+    const btn = document.querySelector('#copySummary');
+    const cs = window.getComputedStyle(btn);
+    // Should NOT be default chrome white/light gray button background (rgb(239, 239, 239) or rgb(255, 255, 255))
+    return cs.backgroundColor === 'rgba(0, 0, 0, 0)' || cs.backgroundColor === 'transparent';
+  });
 
   await browser.close();
 
@@ -210,13 +240,15 @@ async function run() {
   console.log('Scope Modal Opened & Closed:', modalOpen && modalClosed);
   console.log('Mobile Menu Zero Scroll:', menuZeroScroll);
   console.log('Mobile Menu Contains Home:', menuHasHome);
+  console.log('Mobile Menu Opens Cleanly While Scrolled:', menuScrolledPlacement);
+  console.log('Copy Summary Button Background Non-White/Clean:', copyBtnBgClean);
 
   const allPassed = results.every(r => !r.horizontalOverflow && r.heroTextClean && r.storySectionPresent && r.interactiveShuffleWorks && r.stickyPinnedDuringScroll && r.brandColor === 'rgb(37, 99, 235)');
-  if (!allPassed || !step5Active || !waLinkValid || !priceBarVisible || !modalOpen || !modalClosed || !menuZeroScroll || !menuHasHome) {
+  if (!allPassed || !step5Active || !waLinkValid || !priceBarVisible || !modalOpen || !modalClosed || !menuZeroScroll || !menuHasHome || !menuScrolledPlacement || !copyBtnBgClean) {
     console.error('FAILED: Verification checks did not pass!');
     process.exit(1);
   }
-  console.log('\nSUCCESS: All 6 breakpoints, mobile zero-scroll nav, and specialized flows verified cleanly!');
+  console.log('\nSUCCESS: All 6 breakpoints, mobile zero-scroll nav, scroll position independence, and specialized flows verified cleanly!');
 }
 
 run().catch(err => {

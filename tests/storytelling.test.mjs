@@ -129,7 +129,7 @@ test('Colors: Prices use green, WhatsApp uses authentic WA green, and Red is not
   const css = fs.readFileSync(cssPath, 'utf8');
 
   assert.ok(css.includes('--money-green:#d7ff38'), 'CSS must define --money-green as cyber lime');
-  assert.ok(css.includes('--wa-green:#25D366'), 'CSS must define authentic WhatsApp green');
+  assert.ok(css.includes('--wa-green:#d7ff38'), 'CSS must define WhatsApp green matching progress bar green');
   assert.ok(css.includes('.btn.btn-wa') || css.includes('.btn-wa'), 'CSS must define .btn.btn-wa button styling');
   assert.ok(css.includes('var(--money-green)'), 'Price class must use var(--money-green)');
 });
