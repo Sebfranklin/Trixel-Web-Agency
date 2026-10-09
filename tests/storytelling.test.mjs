@@ -49,3 +49,59 @@ test('Storytelling JavaScript implements scroll progress with stop plateau', () 
   assert.ok(js.includes('story') || js.includes('deck'), 'app.js must reference story or deck');
   assert.ok(js.includes('28500') || js.includes('28,500'), 'app.js must include ₦28,500 count up animation');
 });
+
+test('WhatsApp and Email configuration is unified across all pages', () => {
+  const files = [
+    'index.html', 'start.html', 'pricing.html', 'work.html',
+    'services.html', 'about.html', 'faq.html', 'how-it-works.html',
+    'terms.html', 'privacy.html'
+  ];
+
+  for (const file of files) {
+    const fullPath = path.join(rootDir, file);
+    assert.ok(fs.existsSync(fullPath), `${file} must exist`);
+    const content = fs.readFileSync(fullPath, 'utf8');
+
+    // Must link to WhatsApp (+2347042998527)
+    assert.ok(content.includes('2347042998527'), `${file} must contain WhatsApp phone number 2347042998527`);
+
+    // Must contain trixeltechnologies@gmail.com
+    assert.ok(content.includes('trixeltechnologies@gmail.com'), `${file} must contain official email trixeltechnologies@gmail.com`);
+
+    // Must NOT contain old placeholder email or t.me
+    assert.ok(!content.includes('hello@trixeltech.com'), `${file} must not contain deprecated email hello@trixeltech.com`);
+    assert.ok(!content.includes('https://t.me/'), `${file} must not contain deprecated t.me link`);
+  }
+});
+
+test('Interactive Questionnaire Wizard is configured on start.html', () => {
+  const startPath = path.join(rootDir, 'start.html');
+  const html = fs.readFileSync(startPath, 'utf8');
+
+  assert.ok(html.includes('id="interactiveWizard"'), 'start.html must contain #interactiveWizard');
+  assert.ok(html.includes('data-step="1"'), 'start.html must contain Step 1');
+  assert.ok(html.includes('data-step="2"'), 'start.html must contain Step 2');
+  assert.ok(html.includes('data-step="3"'), 'start.html must contain Step 3');
+  assert.ok(html.includes('data-step="4"'), 'start.html must contain Step 4');
+  assert.ok(html.includes('data-step="5"'), 'start.html must contain Step 5');
+  assert.ok(html.includes('id="wizardProgressBar"'), 'start.html must contain progress bar');
+  assert.ok(html.includes('id="waSendBtn"'), 'start.html must contain WhatsApp button');
+});
+
+test('Pricing scope modal and mobile pricebar exist on pricing.html', () => {
+  const pricingPath = path.join(rootDir, 'pricing.html');
+  const html = fs.readFileSync(pricingPath, 'utf8');
+
+  assert.ok(html.includes('id="scopeModalBackdrop"'), 'pricing.html must contain scope modal');
+  assert.ok(html.includes('id="mobilePriceBar"'), 'pricing.html must contain mobile price bar');
+  assert.ok(html.includes('plan-scope-btn'), 'pricing.html must contain plan scope buttons');
+});
+
+test('Terms of service embeds complete Client Services Agreement from Trixel docs', () => {
+  const termsPath = path.join(rootDir, 'terms.html');
+  const html = fs.readFileSync(termsPath, 'utf8');
+
+  assert.ok(html.includes('CLIENT SERVICES AGREEMENT'), 'terms.html must contain Client Services Agreement');
+  assert.ok(html.includes('Price and Payment'), 'terms.html must contain price and payment terms');
+  assert.ok(html.includes('Revisions & Change Requests'), 'terms.html must contain revisions terms');
+});

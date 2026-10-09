@@ -43,9 +43,17 @@ async function run() {
       return document.documentElement.scrollWidth > window.innerWidth;
     });
 
-    // Verify Royal Blue brand color is applied
+    // Verify hero text visibility & no clipping
+    const heroVisible = await page.evaluate(() => {
+      const h1 = document.querySelector('.hero h1');
+      if (!h1) return false;
+      const rect = h1.getBoundingClientRect();
+      return rect.width <= window.innerWidth && rect.height > 0;
+    });
+
+    // Verify Royal Blue brand color is applied to hero primary button
     const royalColor = await page.evaluate(() => {
-      const el = document.querySelector('.btn.primary');
+      const el = document.querySelector('.hero .btn.primary') || document.querySelector('.btn.primary');
       const cs = window.getComputedStyle(el);
       return cs.backgroundColor;
     });
@@ -61,11 +69,9 @@ async function run() {
     const stickyPinned = await page.evaluate(() => {
       const story = document.querySelector('#story');
       const sticky = document.querySelector('.story-sticky');
-      // Scroll to 50% through story
       const mid = story.offsetTop + (story.offsetHeight - window.innerHeight) * 0.5;
       window.scrollTo({ top: mid, behavior: 'instant' });
       const rect = sticky.getBoundingClientRect();
-      // Pinned near top of viewport (e.g. 58px on mobile, 68px on desktop)
       return rect.top >= 50 && rect.top <= 75;
     });
 
@@ -100,25 +106,93 @@ async function run() {
       width: bp.width,
       height: bp.height,
       horizontalOverflow: overflow,
+      heroTextClean: heroVisible,
       storySectionPresent: storyExists > 0,
       stickyPinnedDuringScroll: stickyPinned,
       brandColor: royalColor,
       interactiveShuffleWorks: card3Active,
-      counterText: counterText?.trim(),
-      screenshot: shotPath0
+      counterText: counterText?.trim()
     });
   }
 
+  // --- SPECIALIZED FLOW TESTS ---
+  console.log('\nTesting Interactive Wizard on start.html...');
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('file://' + path.join(rootDir, 'start.html'), { waitUntil: 'load' });
+
+  // Step 1 to Step 2
+  await page.locator('.wizard-pane[data-step="1"] button[data-next="2"]').click();
+  await page.waitForTimeout(200);
+
+  // Step 2 to Step 3
+  await page.locator('.wizard-pane[data-step="2"] button[data-next="3"]').click();
+  await page.waitForTimeout(200);
+
+  // Step 3 to Step 4
+  await page.locator('.wizard-pane[data-step="3"] button[data-next="4"]').click();
+  await page.waitForTimeout(200);
+
+  // Fill in form on Step 4
+  await page.locator('#clientName').fill('Tunde Adebayo');
+  await page.locator('#businessName').fill('Apex Apparel');
+  await page.locator('#clientWhatsApp').fill('+234 801 234 5678');
+  await page.locator('#clientEmail').fill('tunde@apexapparel.ng');
+
+  // Submit to Step 5
+  await page.locator('#generateEnquiryBtn').click();
+  await page.waitForTimeout(300);
+
+  const step5Active = await page.evaluate(() => {
+    const p5 = document.querySelector('.wizard-pane[data-step="5"]');
+    return p5 && p5.classList.contains('active');
+  });
+
+  const waLink = await page.locator('#waSendBtn').getAttribute('href');
+  console.log('Generated WhatsApp Link:', waLink?.slice(0, 80) + '...');
+  const waLinkValid = waLink && waLink.includes('wa.me/2347042998527') && waLink.includes('Tunde%20Adebayo');
+
+  // Capture Wizard Step 5 screenshot
+  await page.screenshot({ path: path.join(screenshotsDir, 'Mobile_S_wizard_step5.png') });
+
+  // --- PRICING PAGE TEST ---
+  console.log('\nTesting Pricing Scope Modal & Mobile Price Bar on pricing.html...');
+  await page.goto('file://' + path.join(rootDir, 'pricing.html'), { waitUntil: 'load' });
+
+  // Verify mobile price bar visible on mobile
+  const priceBarVisible = await page.locator('#mobilePriceBar').isVisible();
+
+  // Click scope modal button for landing page
+  await page.locator('.plan-scope-btn[data-scope="landing-page"]').click();
+  await page.waitForTimeout(200);
+
+  const modalOpen = await page.evaluate(() => {
+    const m = document.querySelector('#scopeModalBackdrop');
+    return m && m.classList.contains('open');
+  });
+
+  // Close modal
+  await page.locator('#scopeModalClose').click();
+  await page.waitForTimeout(200);
+  const modalClosed = await page.evaluate(() => {
+    const m = document.querySelector('#scopeModalBackdrop');
+    return m && !m.classList.contains('open');
+  });
+
   await browser.close();
+
   console.log('\n--- VERIFICATION RESULTS ---');
   console.table(results);
+  console.log('Wizard Step 5 Active:', step5Active);
+  console.log('WhatsApp Link Valid:', waLinkValid);
+  console.log('Mobile Price Bar Visible:', priceBarVisible);
+  console.log('Scope Modal Opened & Closed:', modalOpen && modalClosed);
 
-  const allPassed = results.every(r => !r.horizontalOverflow && r.storySectionPresent && r.interactiveShuffleWorks && r.stickyPinnedDuringScroll && r.brandColor === 'rgb(37, 99, 235)');
-  if (!allPassed) {
-    console.error('FAILED: Some breakpoint tests failed!');
+  const allPassed = results.every(r => !r.horizontalOverflow && r.heroTextClean && r.storySectionPresent && r.interactiveShuffleWorks && r.stickyPinnedDuringScroll && r.brandColor === 'rgb(37, 99, 235)');
+  if (!allPassed || !step5Active || !waLinkValid || !priceBarVisible || !modalOpen || !modalClosed) {
+    console.error('FAILED: Verification checks did not pass!');
     process.exit(1);
   }
-  console.log('SUCCESS: All 6 breakpoints verified cleanly!');
+  console.log('\nSUCCESS: All 6 breakpoints and specialized flows verified cleanly!');
 }
 
 run().catch(err => {
