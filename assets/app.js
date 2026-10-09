@@ -203,8 +203,15 @@
   const filterBtns = $$('.filter-btn');
   const projectCards = $$('.project-card');
   filterBtns.forEach(b => b.addEventListener('click', () => {
-    filterBtns.forEach(x => x.classList.toggle('active', x === b));
-    projectCards.forEach(c => c.hidden = b.dataset.filter !== 'all' && c.dataset.type !== b.dataset.filter);
+    filterBtns.forEach(x => {
+      const isActive = x === b;
+      x.classList.toggle('active', isActive);
+      x.setAttribute('aria-pressed', String(isActive));
+    });
+    projectCards.forEach(c => {
+      const types = (c.dataset.type || '').split(/\s+/);
+      c.hidden = b.dataset.filter !== 'all' && !types.includes(b.dataset.filter);
+    });
   }));
 
   /* ==========================================================================
