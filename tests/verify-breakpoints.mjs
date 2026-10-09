@@ -178,6 +178,28 @@ async function run() {
     return m && !m.classList.contains('open');
   });
 
+  // Verify mobile menu zero-scroll behavior
+  console.log('\nTesting Mobile Menu Zero-Scroll behavior on Mobile S (375x812)...');
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('file://' + path.join(rootDir, 'index.html'), { waitUntil: 'load' });
+  await page.locator('#menu').click();
+  await page.waitForTimeout(300);
+
+  const menuZeroScroll = await page.evaluate(() => {
+    const nav = document.querySelector('#navlinks');
+    if (!nav || !nav.classList.contains('open')) return false;
+    // Check that navlinks element does not require scrolling
+    return nav.scrollHeight <= nav.clientHeight + 2;
+  });
+
+  const menuHasHome = await page.evaluate(() => {
+    const nav = document.querySelector('#navlinks');
+    const links = Array.from(nav.querySelectorAll('a')).map(a => a.textContent.trim());
+    return links.includes('Home');
+  });
+
+  await page.screenshot({ path: path.join(screenshotsDir, 'Mobile_S_menu_open.png') });
+
   await browser.close();
 
   console.log('\n--- VERIFICATION RESULTS ---');
@@ -186,13 +208,15 @@ async function run() {
   console.log('WhatsApp Link Valid:', waLinkValid);
   console.log('Mobile Price Bar Visible:', priceBarVisible);
   console.log('Scope Modal Opened & Closed:', modalOpen && modalClosed);
+  console.log('Mobile Menu Zero Scroll:', menuZeroScroll);
+  console.log('Mobile Menu Contains Home:', menuHasHome);
 
   const allPassed = results.every(r => !r.horizontalOverflow && r.heroTextClean && r.storySectionPresent && r.interactiveShuffleWorks && r.stickyPinnedDuringScroll && r.brandColor === 'rgb(37, 99, 235)');
-  if (!allPassed || !step5Active || !waLinkValid || !priceBarVisible || !modalOpen || !modalClosed) {
+  if (!allPassed || !step5Active || !waLinkValid || !priceBarVisible || !modalOpen || !modalClosed || !menuZeroScroll || !menuHasHome) {
     console.error('FAILED: Verification checks did not pass!');
     process.exit(1);
   }
-  console.log('\nSUCCESS: All 6 breakpoints and specialized flows verified cleanly!');
+  console.log('\nSUCCESS: All 6 breakpoints, mobile zero-scroll nav, and specialized flows verified cleanly!');
 }
 
 run().catch(err => {

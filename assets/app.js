@@ -377,6 +377,38 @@
       ],
       timeline: 'Target delivery: 7–14 working days based on content readiness.'
     },
+    'ai-assistant': {
+      title: 'AI Website Customer Assistant · From ₦20,000',
+      tagline: '24/7 web chatbot trained on your company FAQs to answer visitors and qualify leads in 2 seconds.',
+      included: [
+        'Custom embedded chat interface matching your brand style',
+        'Answers derived strictly from your approved business documentation & FAQs',
+        'Product, pricing, and operating hour inquiries handled instantly',
+        'Direct escalation to WhatsApp (+2347042998527) for high-intent buyers',
+        'Full responsive mobile and desktop launch testing'
+      ],
+      excluded: [
+        'Third-party AI token/API usage costs (paid directly on your own provider account)',
+        'WhatsApp AI / WhatsApp API bots (not offered)',
+        'Unrestrained web scraping or autonomous outbound spamming'
+      ],
+      timeline: 'Target delivery: 2–4 working days once business documentation is approved.'
+    },
+    'flyers-bundle': {
+      title: 'Social Media Flyers Bundle (5-Pack) · ₦20,000',
+      tagline: '5 cohesive promotional flyers designed for product drops, discounts, and announcements.',
+      included: [
+        '5 individual promotional flyers with unified brand styling (save ₦5,000)',
+        'High-resolution exports optimized for Instagram Feed, Stories, and WhatsApp Status',
+        'High-contrast typography, clear offer messaging, and call-to-action triggers',
+        '2 consolidated client revision rounds'
+      ],
+      excluded: [
+        'Full logo redesign or complete corporate branding identity system',
+        'Professional photography or video editing'
+      ],
+      timeline: 'Target delivery: 2–3 working days once copy and photos are supplied.'
+    },
     'minor-redesign': {
       title: 'Minor Website Refresh · ₦40,000',
       tagline: 'Fixing styling inconsistencies, broken alignments, and typography without full rebuild.',

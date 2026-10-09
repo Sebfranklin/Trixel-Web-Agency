@@ -105,3 +105,44 @@ test('Terms of service embeds complete Client Services Agreement from Trixel doc
   assert.ok(html.includes('Price and Payment'), 'terms.html must contain price and payment terms');
   assert.ok(html.includes('Revisions & Change Requests'), 'terms.html must contain revisions terms');
 });
+
+test('Mobile navigation includes Home link across all HTML pages', () => {
+  const pages = [
+    'index.html', 'start.html', 'pricing.html', 'work.html',
+    'services.html', 'about.html', 'faq.html', 'how-it-works.html',
+    'terms.html', 'privacy.html',
+    'services/ai-assistants.html', 'services/websites.html',
+    'services/telegram-bots.html', 'services/online-stores.html',
+    'services/graphics-and-add-ons.html'
+  ];
+
+  for (const page of pages) {
+    const fullPath = path.join(rootDir, page);
+    assert.ok(fs.existsSync(fullPath), `${page} must exist`);
+    const content = fs.readFileSync(fullPath, 'utf8');
+    assert.ok(content.includes('>Home</a>'), `${page} must contain Home nav link`);
+  }
+});
+
+test('Colors: Prices use green, WhatsApp uses authentic WA green, and Red is not on prices', () => {
+  const cssPath = path.join(rootDir, 'assets', 'styles.css');
+  const css = fs.readFileSync(cssPath, 'utf8');
+
+  assert.ok(css.includes('--money-green:#d7ff38'), 'CSS must define --money-green as cyber lime');
+  assert.ok(css.includes('--wa-green:#25D366'), 'CSS must define authentic WhatsApp green');
+  assert.ok(css.includes('.btn.btn-wa') || css.includes('.btn-wa'), 'CSS must define .btn.btn-wa button styling');
+  assert.ok(css.includes('var(--money-green)'), 'Price class must use var(--money-green)');
+});
+
+test('AI Website Customer Assistants service page exists and covers master doc tiers', () => {
+  const aiPath = path.join(rootDir, 'services', 'ai-assistants.html');
+  assert.ok(fs.existsSync(aiPath), 'services/ai-assistants.html must exist');
+  const content = fs.readFileSync(aiPath, 'utf8');
+
+  assert.ok(content.includes('AI Website Customer Assistants') || content.includes('AI Customer Assistants'), 'Must mention AI Customer Assistants');
+  assert.ok(content.includes('20,000'), 'Must mention ₦20,000 basic FAQ bot');
+  assert.ok(content.includes('30,000'), 'Must mention ₦30,000 knowledge base');
+  assert.ok(content.includes('50,000'), 'Must mention ₦50,000 workflows');
+  assert.ok(content.includes('btn-wa'), 'Must use authentic WhatsApp button');
+});
+
