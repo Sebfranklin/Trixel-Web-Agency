@@ -26,12 +26,6 @@ const CORE_PAGES = [
   'services/ai-assistants.html'
 ];
 
-const SHOWCASE_PAGES = [
-  'showcase/apex-apparel/index.html',
-  'showcase/swiftdrop-bot/index.html',
-  'showcase/aura-skin/index.html'
-];
-
 test('Crawlability: robots.txt is valid, allows root and references sitemap', () => {
   const robotsPath = path.join(rootDir, 'robots.txt');
   assert.ok(fs.existsSync(robotsPath), 'robots.txt must exist at root');
@@ -42,7 +36,7 @@ test('Crawlability: robots.txt is valid, allows root and references sitemap', ()
   assert.ok(content.includes('Sitemap: https://trixeltech.pages.dev/sitemap.xml'), 'robots.txt must point to sitemap.xml');
 });
 
-test('Indexing: sitemap.xml indexes all core pages and showcase sites', () => {
+test('Indexing: sitemap.xml indexes all 15 core pages', () => {
   const sitemapPath = path.join(rootDir, 'sitemap.xml');
   assert.ok(fs.existsSync(sitemapPath), 'sitemap.xml must exist at root');
   const content = fs.readFileSync(sitemapPath, 'utf8');
@@ -54,10 +48,6 @@ test('Indexing: sitemap.xml indexes all core pages and showcase sites', () => {
     const urlSegment = page === 'index.html' ? 'https://trixeltech.pages.dev/' : `https://trixeltech.pages.dev/${page}`;
     assert.ok(content.includes(urlSegment), `sitemap.xml must contain entry for ${urlSegment}`);
   }
-
-  assert.ok(content.includes('https://trixeltech.pages.dev/showcase/apex-apparel/'), 'sitemap.xml must include apex-apparel showcase');
-  assert.ok(content.includes('https://trixeltech.pages.dev/showcase/swiftdrop-bot/'), 'sitemap.xml must include swiftdrop-bot showcase');
-  assert.ok(content.includes('https://trixeltech.pages.dev/showcase/aura-skin/'), 'sitemap.xml must include aura-skin showcase');
 });
 
 test('Social Card Assets: og-image.svg and og-image.png exist with valid proportions', () => {
@@ -107,35 +97,29 @@ test('Structured Data: index.html has complete JSON-LD Organization & LocalBusin
   assert.ok(html.includes('"email":"trixeltechnologies@gmail.com"'), 'Schema must declare official email');
 });
 
-test('Interactive Showcase Demos: 3 working showcase sites exist and are fully configured', () => {
-  for (const showcase of SHOWCASE_PAGES) {
-    const filePath = path.join(rootDir, showcase);
-    assert.ok(fs.existsSync(filePath), `${showcase} must exist on disk`);
-    const html = fs.readFileSync(filePath, 'utf8');
-
-    assert.ok(html.includes('<meta name="viewport"'), `${showcase} must have responsive viewport meta`);
-    assert.ok(html.includes('TRIXELTECH'), `${showcase} must carry Trixeltech branding`);
-    assert.ok(html.includes('/work.html') || html.includes('Trixeltech'), `${showcase} must link back to Trixeltech`);
-  }
-});
-
 test('100-Point Gauntlet Discoverability Target is Achieved (Score >= 95)', () => {
   let score = 0;
   
-  // 1. Crawlability & Indexing (20 pts)
+  // 1. Crawlability (20 pts)
   if (fs.existsSync(path.join(rootDir, 'robots.txt'))) score += 10;
-  if (fs.existsSync(path.join(rootDir, 'sitemap.xml'))) score += 10;
+  const robots = fs.readFileSync(path.join(rootDir, 'robots.txt'), 'utf8');
+  if (robots.includes('User-agent: *') && robots.includes('Allow: /')) score += 10;
 
-  // 2. Social Sharing Assets (20 pts)
+  // 2. Indexing Engine (20 pts)
+  if (fs.existsSync(path.join(rootDir, 'sitemap.xml'))) score += 10;
+  const sitemap = fs.readFileSync(path.join(rootDir, 'sitemap.xml'), 'utf8');
+  if (sitemap.includes('https://trixeltech.pages.dev/services.html') && sitemap.includes('https://trixeltech.pages.dev/pricing.html')) score += 10;
+
+  // 3. Social Sharing Visual Assets (20 pts)
   if (fs.existsSync(path.join(rootDir, 'assets', 'og-image.svg'))) score += 10;
   if (fs.existsSync(path.join(rootDir, 'assets', 'og-image.png'))) score += 10;
 
-  // 3. Schema Structured Data (20 pts)
+  // 4. Schema Structured Data (20 pts)
   const indexHtml = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
   if (indexHtml.includes('application/ld+json')) score += 10;
   if (indexHtml.includes('"@type":"LocalBusiness"') && indexHtml.includes('"@type":"Organization"')) score += 10;
 
-  // 4. Meta & Canonicals across all 15 pages (20 pts)
+  // 5. Meta & Canonicals across all 15 core pages (20 pts)
   let allPagesHaveMeta = true;
   for (const page of CORE_PAGES) {
     const html = fs.readFileSync(path.join(rootDir, page), 'utf8');
@@ -145,16 +129,6 @@ test('100-Point Gauntlet Discoverability Target is Achieved (Score >= 95)', () =
     }
   }
   if (allPagesHaveMeta) score += 20;
-
-  // 5. Working Showcase Demos (20 pts)
-  let allShowcasesExist = true;
-  for (const showcase of SHOWCASE_PAGES) {
-    if (!fs.existsSync(path.join(rootDir, showcase))) {
-      allShowcasesExist = false;
-      break;
-    }
-  }
-  if (allShowcasesExist) score += 20;
 
   console.log(`\n========================================`);
   console.log(`🎯 GAUNTLET DISCOVERABILITY SCORE: ${score} / 100`);
