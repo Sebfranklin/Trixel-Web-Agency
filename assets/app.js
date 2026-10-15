@@ -821,3 +821,204 @@
   }
 
 })();
+/* ==========================================================================
+   Graphics showcase rail — scroll-synced progress + step controls.
+   Native scroll-snap does the sliding; this only mirrors position and
+   provides keyboard/pointer stepping for non-touch use.
+   ========================================================================== */
+(() => {
+  const rail = document.getElementById('graphicsRail');
+  if (!rail) return;
+
+  const bar = document.getElementById('graphicsBar');
+  const prev = document.getElementById('graphicsPrev');
+  const next = document.getElementById('graphicsNext');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  const maxScroll = () => Math.max(0, rail.scrollWidth - rail.clientWidth);
+
+  function sync() {
+    const max = maxScroll();
+    const ratio = max === 0 ? 1 : rail.scrollLeft / max;
+    if (bar) {
+      // Floor the bar so it stays visible at the start of the rail.
+      bar.style.width = Math.max(ratio * 100, 8).toFixed(2) + '%';
+    }
+    if (prev) prev.disabled = rail.scrollLeft <= 1;
+    if (next) next.disabled = max === 0 || rail.scrollLeft >= max - 1;
+  }
+
+  function step(direction) {
+    const card = rail.querySelector('.graphics-card');
+    const gap = parseFloat(getComputedStyle(rail).columnGap) || 14;
+    const delta = card ? card.getBoundingClientRect().width + gap : rail.clientWidth * 0.8;
+    rail.scrollBy({ left: direction * delta, behavior: reduce.matches ? 'auto' : 'smooth' });
+  }
+
+  let ticking = false;
+  rail.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { sync(); ticking = false; });
+  }, { passive: true });
+
+  if (prev) prev.addEventListener('click', () => step(-1));
+  if (next) next.addEventListener('click', () => step(1));
+  window.addEventListener('resize', sync, { passive: true });
+
+  // Cards below the fold defer image loading; nudge decode as the rail nears view.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries, obs) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        for (const img of rail.querySelectorAll('img[loading="lazy"]')) img.loading = 'eager';
+        obs.disconnect();
+      }
+    }, { rootMargin: '200px' }).observe(rail);
+  }
+
+  sync();
+})();
+
+/* ==========================================================================
+   Graphics showcase — click-to-expand lightbox + scroll-driven rail.
+   Reuses the page's existing modal pattern (backdrop click, Escape, scroll lock).
+   ========================================================================== */
+(() => {
+  const rail = document.getElementById('graphicsRail');
+  const lightbox = document.getElementById('graphicsLightbox');
+  if (!rail || !lightbox) return;
+
+  const img = document.getElementById('glbImg');
+  const title = document.getElementById('glbTitle');
+  const cat = document.getElementById('glbCat');
+  const closeBtn = document.getElementById('glbClose');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let lastFocus = null;
+
+  /* ---- Click to view the full design ---- */
+  function open(btn) {
+    const src = btn.dataset.full;
+    if (!src) return;
+    lastFocus = btn;
+    img.src = src;
+    img.alt = btn.querySelector('img') ? btn.querySelector('img').alt : '';
+    title.textContent = btn.dataset.title || '';
+    cat.textContent = btn.dataset.cat || '';
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+
+  function close() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+    img.src = '';
+    if (lastFocus) lastFocus.focus();
+  }
+
+  rail.addEventListener('click', (e) => {
+    const btn = e.target.closest('.graphics-art');
+    if (btn) open(btn);
+  });
+  closeBtn.addEventListener('click', close);
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) close(); });
+  addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox.classList.contains('open')) close();
+  });
+
+  /* ---- Scroll-driven horizontal advance ----
+     Vertical page scroll maps to horizontal rail position, so the images slide
+     as the section passes through the viewport. Deliberately NOT scroll-jacking:
+     page scroll is never blocked, the rail is not pinned, and any direct
+     interaction with the rail takes priority for a short cooldown. */
+  // Once the user drives the rail themselves, scroll-driving yields briefly so a
+  // deliberate step is not yanked back mid-animation.
+  let overrideUntil = 0;
+  const markOverride = () => { overrideUntil = Date.now() + 1200; };
+  // Only a DELIBERATE horizontal gesture may suspend the scroll drive. A vertical
+  // drag that merely starts on top of a card must keep driving the rail — treating
+  // every touch as manual made the carousel appear frozen whenever a finger rested
+  // on an image while the page scrolled.
+  let touchOrigin = null;
+  rail.addEventListener('touchstart', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) touchOrigin = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+  rail.addEventListener('touchmove', (e) => {
+    if (!touchOrigin) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    const dx = Math.abs(t.clientX - touchOrigin.x);
+    const dy = Math.abs(t.clientY - touchOrigin.y);
+    if (dx > 6 && dx > dy) { markOverride(); touchOrigin = null; }   // rail swipe
+    else if (dy > 6 && dy > dx) { touchOrigin = null; }              // page scroll
+  }, { passive: true });
+  rail.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) markOverride();
+  }, { passive: true });
+  for (const id of ['graphicsPrev', 'graphicsNext']) {
+    const b = document.getElementById(id);
+    if (b) b.addEventListener('click', markOverride);
+  }
+
+  const section = document.getElementById('graphics');
+  const pin = section ? section.querySelector('.graphics-pin') : null;
+  const navPx = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 68;
+
+  // While the sticky panel is pinned, the wrapper's remaining scroll length maps
+  // to the rail's full horizontal travel. Outside that span progress clamps, so
+  // the rail never fights the rest of the page.
+  /** Where the rail should sit for the current page scroll. */
+  function targetForScroll() {
+    const max = rail.scrollWidth - rail.clientWidth;
+    if (max <= 0 || !section || !pin) return 0;
+    const pinnedTravel = section.offsetHeight - pin.offsetHeight;
+    if (pinnedTravel <= 0) return 0;
+    const passed = navPx() - section.getBoundingClientRect().top;
+    return Math.min(1, Math.max(0, passed / pinnedTravel)) * max;
+  }
+
+  // Writing scrollLeft straight from the scroll event reads as a series of jumps:
+  // page scroll arrives in coarse steps, and `scroll-snap-type:mandatory` then
+  // yanks the rail to the nearest card on every write, fighting the position we
+  // just set. Instead, ease the rail toward the target on its own frame loop, so
+  // motion is continuous and independent of scroll-event granularity.
+  let eased = null;
+  let frame = 0;
+  const EASE = 0.14;
+
+  function step() {
+    frame = 0;
+    const max = rail.scrollWidth - rail.clientWidth;
+    if (max <= 0) return;
+    // A deliberate swipe takes over: hand the rail back untouched.
+    if (reduce.matches || Date.now() < overrideUntil) {
+      eased = null;
+      return;
+    }
+    if (eased === null) eased = rail.scrollLeft;
+    const target = targetForScroll();
+    const delta = target - eased;
+    if (Math.abs(delta) < 0.4) {
+      eased = target;
+      rail.scrollLeft = target;
+      return;
+    }
+    eased += delta * EASE;
+    rail.scrollLeft = eased;
+    frame = requestAnimationFrame(step);
+  }
+
+  function requestDrive() {
+    if (frame === 0) frame = requestAnimationFrame(step);
+  }
+
+  addEventListener('scroll', requestDrive, { passive: true });
+  addEventListener('resize', requestDrive, { passive: true });
+  // Any manual input resets the eased origin so control resumes cleanly.
+  for (const ev of ['touchstart', 'wheel', 'pointerdown']) {
+    rail.addEventListener(ev, () => { eased = null; }, { passive: true });
+  }
+  requestDrive();
+})();

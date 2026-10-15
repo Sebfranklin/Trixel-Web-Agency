@@ -138,3 +138,254 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
 .wizard-summary-card pre{margin:0;white-space:pre-wrap;font:12px/1.5 var(--mono);color:#cbd5e1}
 
 @media(max-width:760px){.cards,.project-grid{grid-template-columns:1fr}.info-card{border-right:0}.two-col,.calc-layout{grid-template-columns:1fr}.total-panel{position:static}.mobile-pricebar{display:flex;position:fixed;z-index:38;bottom:0;left:0;right:0;padding:12px 14px;background:#080a0ff6;backdrop-filter:blur(18px);gap:10px;border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.7)}.mobile-pricebar .price-badge{display:flex;flex-direction:column;justify-content:center}.mobile-pricebar .price-val{font:700 18px/1 var(--display);color:var(--white)}.mobile-pricebar .price-lbl{font:9px var(--mono);color:var(--muted)}.mobile-pricebar .btn{flex:1;justify-content:center;padding:12px 10px;font-size:10px}.footer{flex-wrap:wrap;padding-bottom:76px}}
+
+/* Graphics showcase (scroll-snap rail) — bound to existing tokens, no new palette */
+.graphics{padding:clamp(70px,10vw,140px) 0 var(--pad);border-bottom:1px solid var(--line)}
+.graphics-rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,24%);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;padding:0 var(--pad) 20px;scrollbar-width:thin;scrollbar-color:var(--royal) transparent}
+.graphics-rail:focus-visible{outline:2px solid var(--royal);outline-offset:-4px}
+.graphics-card{scroll-snap-align:start;min-width:0;border:1px solid var(--line);background:#0c121c;display:flex;flex-direction:column}
+.graphics-art{position:relative;aspect-ratio:3/4;overflow:hidden;background:#080a0f}
+.graphics-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;transition:transform .7s cubic-bezier(.16,1,.3,1)}
+.graphics-card:hover .graphics-art img{transform:scale(1.05)}
+.graphics-meta{padding:14px 16px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-top:1px solid var(--line);background:var(--bg)}
+.graphics-meta h3{font:clamp(15px,1.25vw,19px)/1.1 var(--display);letter-spacing:-.04em;text-transform:uppercase;margin:0}
+.graphics-meta span{white-space:nowrap}
+.graphics-foot{display:flex;align-items:center;gap:22px;padding:22px var(--pad) 0;flex-wrap:wrap}
+.graphics-track{flex:1;min-width:120px}
+.graphics-nav{display:flex;align-items:center;gap:8px}
+@media(max-width:1100px){.graphics-rail{grid-auto-columns:minmax(210px,34%)}}
+@media(max-width:900px){.graphics-rail{grid-auto-columns:minmax(190px,42%)}}
+@media(max-width:640px){.graphics-rail{grid-auto-columns:78%;gap:12px;padding-bottom:16px}.graphics-art{aspect-ratio:4/5}.graphics-foot{padding-top:16px;gap:14px}.graphics-foot .btn{order:3;width:100%;justify-content:center}.graphics-track{min-width:70px}}
+
+.deck-btn:disabled{opacity:.35;cursor:not-allowed}
+
+@media(max-width:640px){.graphics-nav .deck-btn{width:44px;height:44px;font-size:15px}}
+
+/* Graphics showcase — revision pass from visual QA */
+/* 1. Fixed caption height: a wrapped 2-line client name previously grew its caption
+      block, so card bottoms staircased across the rail. */
+.graphics-meta{padding:12px 14px;min-height:68px;align-items:center}
+/* 2. Stop widow/orphan wraps ("EVERGREEN LAWN / CO"). */
+.graphics-meta h3{text-wrap:balance}
+/* 3. At tablet the shared .section-intro squeezed the headline into a 4-line
+      column with a dead zone beside it. Stack it for this section only. */
+@media(max-width:900px){.graphics .section-intro{flex-direction:column;align-items:start;gap:16px}}
+/* 4. The fixed mobile price bar overlapped the section foot by 59px at 375px.
+      Clear it so the CTA and controls stay reachable. */
+@media(max-width:760px){.graphics{padding-bottom:92px}}
+/* 5. Unfilled progress track was near-invisible against the dark panel. */
+.graphics-track{background:rgba(247,245,239,.30)}
+
+/* Graphics showcase — pass 3: full-image display, click-to-expand, scroll drive */
+/* The art is now a button. Images use `contain` so EVERY design shows in full:
+   mixed orientations letterbox inside the fixed 3:4 frame instead of being
+   cropped, which keeps the rail rhythm uniform without distorting any design. */
+.graphics-art{display:block;width:100%;aspect-ratio:3/4;position:relative;overflow:hidden;padding:0;border:0;background:#0c121c;cursor:zoom-in}
+.graphics-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;transition:transform .7s cubic-bezier(.16,1,.3,1)}
+.graphics-card:hover .graphics-art img{transform:scale(1.03)}
+.graphics-art:focus-visible{outline:2px solid var(--royal);outline-offset:-3px}
+/* Expand affordance — always visible on touch, hover-revealed on pointer devices. */
+.graphics-art:after{content:"VIEW \21F2";position:absolute;right:10px;bottom:10px;padding:5px 8px;font:9px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--white);background:rgba(8,10,15,.74);border:1px solid var(--line);opacity:0;transition:opacity .25s;pointer-events:none}
+.graphics-card:hover .graphics-art:after,.graphics-art:focus-visible:after{opacity:1}
+@media(hover:none){.graphics-art:after{opacity:1}}
+/* Scroll-driven positioning writes scrollLeft every frame: smooth behaviour would
+   smear it. Arrows still ease because they pass behavior:'smooth' explicitly. */
+.graphics-rail{scroll-behavior:auto}
+/* Lightbox — reuses the site's .scope-modal-backdrop/.scope-modal-close pattern. */
+.graphics-lightbox{background:rgba(0,0,0,.9)}
+.glb-panel{max-width:min(1080px,95vw);display:flex;flex-direction:column;gap:14px;padding:clamp(14px,2.4vw,22px);overflow:hidden}
+.glb-panel img{display:block;margin:0 auto;max-width:100%;max-height:72vh;width:auto;height:auto;background:#080a0f;border:1px solid var(--line)}
+.glb-cap{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.glb-cap h3{font:clamp(18px,2.1vw,28px)/1.1 var(--display);letter-spacing:-.045em;text-transform:uppercase;margin:0}
+.glb-panel .btn{align-self:flex-start}
+@media(max-width:640px){.glb-panel img{max-height:60vh}.glb-panel .btn{align-self:stretch;justify-content:center}}
+
+/* Graphics showcase — pass 4: PINNED scroll region.
+   The section is tall and its inner panel is sticky, so vertical scroll is
+   consumed while the content holds still and the rail travels leftwards — the
+   page then resumes. Mirrors the site's existing .story-section mechanic. */
+.graphics-scroll{position:relative;height:400vh;border-bottom:1px solid var(--line)}
+.graphics-pin{position:sticky;top:var(--nav);height:calc(100svh - var(--nav));min-height:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,1.6vw,24px);overflow:visible;padding:clamp(16px,2.2vw,32px) 0}
+/* Cards are height-driven (height -> width via the 3:4 ratio) so the whole
+   composition always fits the pinned viewport instead of overflowing it. */
+.graphics-card{--art-h:clamp(220px,46vh,480px);width:calc(var(--art-h) * .75);min-width:0}
+.graphics-rail{grid-auto-columns:max-content}
+.graphics-art{height:var(--art-h);width:100%}
+.graphics-intro{padding-bottom:0}
+.graphics-foot{padding:0 var(--pad)}
+@media(max-width:1100px){.graphics-card{--art-h:clamp(210px,42vh,420px)}}
+@media(max-width:900px){
+  .graphics-card{--art-h:clamp(200px,38vh,380px)}
+  .graphics-intro{flex-direction:column;align-items:start;gap:12px;padding:0 var(--pad)}
+}
+@media(max-width:760px){.graphics-pin{padding-bottom:84px}}
+@media(max-width:640px){
+  .graphics-scroll{height:320vh}
+  .graphics-card{--art-h:clamp(170px,32vh,290px)}
+  .graphics-pin{gap:9px;padding-top:12px}
+  .graphics-intro{padding:0 var(--pad) 2px}
+  .graphics-intro p{font-size:12px;line-height:1.4}
+  .graphics-foot{padding-top:6px;gap:9px}
+  .graphics-meta{min-height:56px;padding:9px 12px}
+}
+
+/* Graphics lightbox — fit correction.
+   The panel inherited overflow:hidden from .glb-panel, so when the image was tall
+   the caption and CTA were CLIPPED rather than scrolled (measured: 35px overflow
+   at 1440x900, CTA bottom 844 vs panel bottom 833). Cap the image so the whole
+   panel always fits, and keep overflow-y:auto as a safety net. */
+.glb-panel{max-height:88vh;overflow-y:auto;overflow-x:hidden}
+.glb-panel img{max-height:62vh}
+@media(max-width:640px){.glb-panel img{max-height:50vh}}
+/* The expand affordance was hover-only, so it was invisible on touch and in any
+   static capture. Keep it faintly present and brighten on hover/focus. */
+.graphics-art:after{opacity:.55}
+.graphics-card:hover .graphics-art:after,.graphics-art:focus-visible:after{opacity:1}
+
+/* Graphics showcase — pass 5 (revised): no mask.
+   The original mask-image gradient dissolved the last 54px of the rail into
+   transparency, which made partially-visible cards look like they were hidden
+   behind a div. Removed entirely. The rail's own padding-inline keeps cards
+   from being sliced mid-character at the snap boundaries. */
+/* Stronger control borders: the inherited --line is near-invisible on the dark
+   panel, which made the arrows read as decoration rather than buttons. */
+.graphics-nav .deck-btn{border-color:rgba(247,245,239,.42);color:var(--white)}
+.graphics-nav .deck-btn:hover:not(:disabled){background:var(--white);color:var(--ink)}
+@media(max-width:640px){
+  /* Reclaim the dead band under the CTA: 84px of padding was clearing a 66px
+     bar and leaving a visible void. */
+  .graphics-pin{padding-bottom:70px}
+  /* Slightly taller cards so the pinned frame reads full rather than hollow. */
+  .graphics-card{--art-h:clamp(175px,34vh,300px)}
+  .graphics-art:after{font-size:10px;padding:6px 9px}
+}
+
+/* Graphics showcase — pass 6: grid alignment + short-viewport clearance.
+   `scroll-snap-align:start` snaps to the container's padding edge, so the rail
+   started pre-scrolled by exactly its own padding and the first card sat 18px
+   left of the headline. scroll-padding makes snapping respect that inset. */
+.graphics-rail{scroll-padding-inline:var(--pad)}
+/* Very short viewports (phone with browser chrome, or landscape) could not clear
+   the fixed price bar; scale the composition down and drop the least essential
+   copy rather than letting the CTA slide under the bar. */
+@media(max-width:760px) and (max-height:660px){
+  .graphics-pin{padding-top:8px;padding-bottom:78px;gap:8px}
+  .graphics-card{--art-h:clamp(130px,26vh,220px)}
+  .graphics-intro{gap:8px}
+  .graphics-intro p{display:none}
+  .graphics-meta{min-height:46px;padding:8px 10px}
+  .graphics-meta h3{font-size:14px}
+}
+
+/* Pass 7: the pin's min-height:520px overrode calc(100svh - var(--nav)) on short
+   viewports, making the panel 18px taller than the screen at 560px and sliding
+   the CTA under the fixed price bar. Height must follow the viewport exactly. */
+.graphics-pin{min-height:0}
+/* Very short screens: shrink the headline and cards further so the composition
+   still fits instead of clipping. */
+@media(max-width:760px) and (max-height:620px){
+  .graphics-card{--art-h:clamp(110px,24vh,190px)}
+  .graphics-intro h2{font-size:clamp(26px,7.4vw,40px)}
+  .graphics-foot .btn{padding:11px 13px}
+}
+
+/* Graphics showcase — pass 8: larger per-card captions (restored to the earlier,
+   more legible scale) and a direction-aware touch fix so a finger resting on an
+   image no longer freezes the scroll drive. */
+.graphics-meta{min-height:72px;padding:14px 16px}
+.graphics-meta h3{font-size:clamp(17px,1.5vw,22px)}
+.graphics-meta span{font-size:10px}
+@media(max-width:900px){
+  .graphics-meta{min-height:70px;padding:13px 15px}
+  .graphics-meta h3{font-size:clamp(17px,4.4vw,22px)}
+  .graphics-meta span{font-size:10px;letter-spacing:.11em}
+}
+@media(max-width:640px){
+  .graphics-meta{min-height:68px;padding:12px 14px}
+  .graphics-meta h3{font-size:clamp(17px,4.6vw,21px)}
+  .graphics-meta span{font-size:10px}
+}
+@media(max-width:760px) and (max-height:660px){
+  .graphics-meta{min-height:60px;padding:10px 12px}
+  .graphics-meta h3{font-size:16px}
+}
+
+/* Graphics showcase — pass 9: smooth scroll.
+   `scroll-snap-type: mandatory` forces the rail to the nearest card on every
+   programmatic scrollLeft write, which fights the scroll-driven position and
+   reads as stuttering. `proximity` only snaps when already close, so it keeps
+   tidy alignment after a manual swipe without fighting the drive. The pinned
+   region is also lengthened slightly so the rail travels slower per unit of
+   page scroll, which reads as smoother. */
+.graphics-rail{scroll-snap-type:x proximity}
+.graphics-scroll{height:440vh}
+@media(max-width:900px){.graphics-scroll{height:400vh}}
+@media(max-width:640px){.graphics-scroll{height:360vh}}
+
+/* Pass 10: snap removed from the driven rail.
+   `proximity` still snapped whenever the eased position passed near a card
+   boundary, producing a one-card-width jump (measured 228px, ~8% of total travel)
+   in the middle of an otherwise smooth sweep. The drive already positions the
+   rail precisely and the arrows step by exact card widths, so snapping adds
+   nothing but jitter here. */
+.graphics-rail{scroll-snap-type:none}
+.graphics-card{scroll-snap-align:none}
+
+/* Graphics showcase — pass 11: larger cards.
+   Card size was pinned by the SHORTEST common phone (375x667 had 0px slack), so
+   taller phones never used their spare height. Cards now scale with viewport
+   height, and short screens get a compact tier that drops the intro paragraph to
+   buy back room rather than shrinking the artwork. */
+@media(max-width:1100px){.graphics-card{--art-h:clamp(210px,44vh,440px)}}
+@media(max-width:900px){.graphics-card{--art-h:clamp(200px,42vh,430px)}}
+@media(max-width:640px){
+  .graphics-card{--art-h:clamp(190px,39vh,345px)}
+  .graphics-meta{min-height:66px;padding:12px 14px}
+}
+/* Short screens: reclaim the paragraph's height for the artwork. */
+@media(max-width:760px) and (max-height:700px){
+  .graphics-intro p{display:none}
+  .graphics-intro h2{font-size:clamp(28px,7.8vw,42px)}
+  .graphics-card{--art-h:clamp(150px,33vh,260px)}
+  .graphics-meta{min-height:58px;padding:10px 12px}
+  .graphics-meta h3{font-size:16px}
+  .graphics-pin{padding-top:10px;padding-bottom:74px;gap:9px}
+}
+
+/* Graphics showcase — pass 12: prevent cards sliding under the heading.
+   The .graphics-intro and .graphics-rail are siblings inside a flex column.
+   Without explicit stacking, the rail's card backgrounds paint on the same
+   plane as the intro text. On mobile scroll-in, cards visually slip behind
+   the heading. Giving the intro position:relative + z-index:1 lifts it into
+   its own stacking layer above the rail without affecting layout. */
+.graphics-intro{position:relative;z-index:1}
+
+/* Graphics showcase — pass 13: cards must NEVER move vertically.
+   Root cause (measured with real-phone chrome simulated: cards overflowed the
+   rail by 100-111px on every phone size):
+   1. `overflow-x:auto` computes `overflow-y` to `auto` per CSS spec, so the rail
+      was VERTICALLY pannable. A resting finger + vertical momentum slid the
+      card tops up beneath the intro headline (pass 12's z-index then painted
+      the heading above them — the reported symptom).
+   2. Card art is sized with vh while the pinned panel is sized with svh; on a
+      real phone (browser chrome) vh > svh, guaranteeing the overflow above.
+   Fix at the geometry level, not paint order:
+   - `overflow-y:hidden` forbids vertical panning of the rail entirely (a
+     hidden-overflow element is not finger-scrollable, and the fitted layout
+     below leaves zero scroll range — nothing to reveal even by script).
+   - `touch-action:pan-x pan-y` (NOT the stricter `pan-x`): the rail still needs
+     native HORIZONTAL panning for card swipes, but must not BLOCK vertical
+     page scrolling for touches on the cards — the pinned rail is DRIVEN by
+     page scroll, so `touch-action:pan-x` froze the slide whenever a finger
+     rested on an image (reported on device: "scrolling upwards on the images
+     doesn't slide, only if I'm outside the images"). pan-y lets vertical
+     gestures rise to the page scroller, which the drive converts to rail
+     travel; the rail itself cannot pan vertically because of overflow-y.
+   - `grid-auto-rows:100%` + stretched cards make the row track the rail's REAL
+     height (definite whenever the pin squeezes it, auto when there is room),
+     and `.graphics-art{flex:1;min-height:0}` absorbs the squeeze, so no card
+     top ever leaves the rail box and no label is ever clipped. In the roomy
+     case the aspect-ratio frame keeps the exact pass-11 composition. */
+.graphics-rail{overflow-y:hidden;touch-action:pan-x pan-y;grid-auto-rows:100%}
+.graphics-card{height:100%}
+.graphics-art{height:auto;flex:1 1 auto;min-height:0}
