@@ -389,3 +389,37 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
 .graphics-rail{overflow-y:hidden;touch-action:pan-x pan-y;grid-auto-rows:100%}
 .graphics-card{height:100%}
 .graphics-art{height:auto;flex:1 1 auto;min-height:0}
+
+/* Pass 14 — HERO DECLUTTER (plan by Qwen Max, surgical against existing classes).
+   Mobile element count 12+ -> 8; 8px spacing scale replaces ad-hoc clamps.
+   - eyebrow = ONE nowrap mono line (pulse inline, clock merged, no wrap)
+   - mono footnote cut from hero (asterisk caveat belongs on the pricing page)
+   - secondary CTA hidden <=640px: the fixed WA price bar already carries that
+     conversion; both buttons stacked full-width was 2x vertical noise
+   - planet panel pulled INTO the first mobile viewport, its art cleared of the
+     fixed price bar (padding-bottom >= bar height)
+   - scroll cue desktop-only (mobile has the fixed bar + natural scroll)
+   - spacing: h1 24/16 mobile -> 64/32 desktop; paragraph capped at 420px so the
+     tightened copy reads in 3 clean lines, not a wall
+   - ALL animations preserved (lift-in, planet float, pulse, shine) */
+.hero-top{justify-content:flex-start;gap:0;white-space:nowrap;overflow:hidden}
+.hero-top .availability{min-width:0}
+@media(max-width:640px){
+  .hero-left{padding-top:16px}
+  .hero h1{margin:24px 0 16px}
+  .hero-bottom{flex-direction:column;align-items:flex-start}
+  .hero-bottom p{max-width:420px;font-size:16px;line-height:1.5}
+  .hero-actions{margin-top:16px}
+  .hero .btn.magnetic:not(.primary){display:none}
+  .scroll-cue{display:none}
+  .hero-right{min-height:430px;padding-bottom:84px}
+  .orbit-label.ol3{bottom:30%}
+}
+@media(min-width:641px) and (max-width:900px){
+  .hero h1{margin:40px 0 24px}
+  .hero .btn.magnetic:not(.primary){display:none}
+}
+@media(min-width:901px){
+  .hero h1{margin:64px 0 32px}
+  .hero-bottom p{font-size:clamp(15px,1.1vw,17px)}
+}
