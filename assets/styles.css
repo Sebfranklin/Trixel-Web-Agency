@@ -423,3 +423,23 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
   .hero h1{margin:64px 0 32px}
   .hero-bottom p{font-size:clamp(15px,1.1vw,17px)}
 }
+
+/* Pass 15 — NAV + DESKTOP HERO DECLUTTER.
+   1. Desktop nav trims 7 links -> 5 (Services / Work / Pricing / How it works /
+      About): "Home" was redundant with the logo (which navigates home), and
+      "FAQ" stays one click away in the footer. The mobile drawer keeps a Home
+      link (drawer-only via .hide-desktop, satisfying the existing
+      verify-breakpoints contract) and drops FAQ the same way.
+   2. Measured defect: .mobile-actions (drawer's Start + WhatsApp buttons) had
+      no desktop hide rule, so every >=641px viewport showed THREE CTA buttons
+      in a row (Start / WhatsApp / Start). It exists only for the drawer.
+   3. Measured defect: the display h1 mid-word wrapped at EVERY desktop width
+      ("IS MESSAGI-NG"): at 10.5vw the longest line is ~6.97em wide while the
+      1.2fr column is only ~(60vw - 104px), an ever-present ~3% overflow.
+      Cap the font to its column: min(10.5vw, (60vw - 136px) / 6.9) — verified
+      to yield 3 clean lines at 1024/1280/1440/1920. */
+@media(min-width:641px){
+  .navlinks .hide-desktop{display:none}
+  .navlinks .mobile-actions{display:none}
+  .hero h1{font-size:min(10.5vw,calc((60vw - 140px)/7.2))}
+}

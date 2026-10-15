@@ -22,7 +22,9 @@ const CHROME = '/home/zeus/.cache/ms-playwright/chromium-1200/chrome-linux64/chr
 const cases = [
   { name: 'MobileS', width: 375, height: 812, mobile: true },
   { name: 'MobileL', width: 430, height: 932, mobile: true },
-  { name: 'Desktop', width: 1440, height: 900, mobile: false }
+  { name: 'Laptop', width: 1024, height: 768, mobile: false },
+  { name: 'Desktop', width: 1440, height: 900, mobile: false },
+  { name: 'Wide', width: 1920, height: 1080, mobile: false }
 ];
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
@@ -42,6 +44,8 @@ for (const c of cases) {
     const secondary = document.querySelector('.hero .btn.magnetic:not(.primary)');
     const primary = document.querySelector('.hero .btn.primary');
     const cue = document.querySelector('.scroll-cue');
+    const h1fs = parseFloat(getComputedStyle(document.querySelector('.hero h1')).fontSize);
+    const lineHeights = [...document.querySelectorAll('.hero h1 .line')].map(l => l.getBoundingClientRect().height);
     const artTop = document.querySelector('.art-top');
     const planet = document.querySelector('.planet-core');
     const bar = document.querySelector('.mobile-pricebar');
@@ -58,6 +62,8 @@ for (const c of cases) {
       planetClearsBar: planet ? planet.getBoundingClientRect().bottom <= barTop + 0.5 : false,
       cueHiddenMobile: cue ? getComputedStyle(cue).display === 'none' : true,
       artTopH: +h(artTop).toFixed(1),
+      maxLineH: +Math.max(...lineHeights).toFixed(1),
+      h1fs: +h1fs.toFixed(1),
       noHOverflow: document.documentElement.scrollWidth <= innerWidth,
       brandColor: (primary && getComputedStyle(primary).backgroundColor) || 'none'
     };
@@ -85,7 +91,9 @@ for (const c of cases) {
     planet: checks.planetPlaced ? 'OK' : 'FAIL',
     cue: checks.cueCorrect ? 'OK' : 'FAIL',
     artTop: checks.artTopOneLine ? 'OK' : `FAIL(${m.artTopH}px)`,
+    h1fit: m.maxLineH <= m.h1fs * 1.15 ? 'OK' : `FAIL(${m.maxLineH}px@${m.h1fs}px)`,
     overflow: checks.noHOverflow ? 'OK' : 'FAIL',
+    h1fit: m.maxLineH <= m.h1fs * 1.15 ? 'OK' : `FAIL(${m.maxLineH}@${m.h1fs})`,
     brand: checks.brandOk && checks.h1Visible ? 'OK' : 'FAIL'
   });
   await context.close();
