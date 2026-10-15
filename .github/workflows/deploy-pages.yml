@@ -1,0 +1,25 @@
+name: Deploy to Cloudflare Pages
+
+# Pushes to main auto-deploy production (trixeltech.pages.dev).
+# The Pages project is Direct-Upload based (cannot be converted to native Git
+# integration per Cloudflare), so Actions + wrangler is the official path for
+# git-triggered deploys. Other branches can be added as preview deploys later.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to trixeltech.pages.dev
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy . --project-name=trixeltech --branch=main --commit-dirty=true
